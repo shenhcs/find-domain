@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XSTVXZ7M3D"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XSTVXZ7M3D');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>finddomain.ai</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:wght@400;700&display=swap">
+    <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="98e2b694-2a88-419b-a432-072f1e8def0e";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./myIcon.ico?" type="image/x-icon">
+    <link rel="shortcut icon" href="./myIcon.ico?" type="image/x-icon">    
+</head>
+<body>
+    <div class="container">
+        <!-- Your content goes here -->
+        <div class="content-wrapper">
+        <div class="input-form">
+            <h1>✨FindDomain.AI✨</h1>
+            <p>Describe your project:</p>
+            <textarea id="description" rows="4" cols="50"></textarea><br>
+
+            <p>Select extensions:</p>
+            <div class="extensions-wrapper">
+                {% for extension in extensions %}
+                    <label class="extension-label">
+                        <input type="checkbox" id="{{ extension }}" name="{{ extension }}" value="{{ extension }}" {% if loop.first %}checked{% endif %}>
+                        {{ extension }}
+                    </label>
+                {% endfor %}
+                <label class="extension-label">
+                    <input type="checkbox" id="customExtensionCheckbox">
+                    Custom:&nbsp;
+                    <input type="text" id="customExtensionInput" placeholder="Enter extension">
+                </label>
+            </div>
+
+            <br><br>
+            <button id="generateButton" onclick="generateNewDomainList()">🔮Find Availible Domain Names🔮</button>
+        </div>
+        <ul id="domainList"></ul>
+
+        <div id="spinner" style="display: none;">
+            <br/>
+            <div class="lds-ring loader"></div>
+        </div>
+            
+        <button id="loadMoreButton" onclick="loadMoreDomains()" style="display: none;">🙏Load More🙏</button>
+</div>
+
+        <script>
+            //flags
+            let isLoadingMore = false;
+            let hasGeneratedDomains = false;
+            let description = "";
+            let selectedExtensions = [];
+            let generatedDomainsWithoutExtensions = new Set();
+
+            async function generateNewDomainList() {
+                console.log("generate new domain list");
+                clearDomainList();
+                generatedDomainsWithoutExtensions.clear();
+
+                description = document.getElementById("description").value;
+                console.log("description",description)
+                const checkboxes = document.querySelectorAll("input[type=checkbox]:checked");
+                selectedExtensions = Array.from(checkboxes).map(checkbox => checkbox.value);
+                
+                //handles custom extension checkbox
+                const customCheckbox = document.getElementById("customExtensionCheckbox");
+                if (customCheckbox.checked) {
+                    const customExtension = document.getElementById("customExtensionInput").value;
+                    if (customExtension !== "") {
+                        selectedExtensions.push(customExtension);
+                    }
+                }
+
+                console.log("selected extensions", selectedExtensions)
+
+                await generateDomainNames();
+            }
+
+            async function generateDomainNames() {
+                console.log("generate domain names")
+
+                showSpinner();
+                document.getElementById("loadMoreButton").style.display = "none";
+
+                let response, data;
+
+                let retries = 0;
+
+                for (let i = 0; i < 5; i++) {
+                    console.log("attempt: ",i)
+                    try {
+                        response = await fetch("/generate_domains_without_extensions", {
+                            method: "POST",
+                            headers: {
+                            "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                description: description,
+                                generatedDomains: Array.from(generatedDomainsWithoutExtensions),
+                                }),
+                            });
+                            data = await response.json();
+                            console.log("data",data);
+                    } catch (error) {
+                        retries++;
+                        console.error(`Error fetching domains: ${error.message}. Retrying ${10 - retries} more times...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
+                    }
+
+
+                    const domainsWithoutExtensions = data.domains;
+                    console.log("domainsWithoutExtensions",domainsWithoutExtensions)
+
+                    // Add generated domains without extensions to the set
+                    domainsWithoutExtensions.forEach(domain => generatedDomainsWithoutExtensions.add(domain));
+
+                    //Add extensions
+                    const domainsWithExtensions = [];
+                    for (const domain of domainsWithoutExtensions) {
+                        for (extension of selectedExtensions) {
+                            domainsWithExtensions.push(domain + extension);
+                        }
+                    }
+
+                    console.log("domains with extensions",domainsWithExtensions)
+
+                    // Check availability and update DOM
+                    const domainList = document.getElementById("domainList");
+                    let availableCount = 0;
+                    for (const domain of domainsWithExtensions) {
+                        const available = await checkAvailability(domain);
+                        if(!available)
+                            continue;
+                        availableCount++;
+
+                        const listItem = await createListItem(domain);
+                        domainList.appendChild(listItem);
+                        console.log(listItem)
+                    }
+
+                    if (availableCount > 0) {
+                        isLoadingMore = false;
+                        hasGeneratedDomains = true;
+                        document.getElementById("loadMoreButton").style.display = "block";
+                        hideSpinner();
+                        return;
+                    }
+                }
+
+                console.log("No available domains found.");
+                document.getElementById("loadMoreButton").style.display = "block";
+                hideSpinner();
+                
+            }
+            
+
+            async function createListItem(domain) {
+                console.log("create list item")
+                const listItem = document.createElement("li");
+                const innerDiv = document.createElement("div");
+                const outerDiv = document.createElement("div");
+                const domainSpan = document.createElement("span");
+                const isAvailableSpan = document.createElement("span");
+                const registerSpan = document.createElement("span");
+                const providerTable = await createProviderTable(domain);
+
+                innerDiv.setAttribute("class", "inner-domain-div");
+
+                domainSpan.setAttribute("class", "domain-text");
+                domainSpan.textContent = domain.trim();
+                innerDiv.appendChild(domainSpan);
+
+                isAvailableSpan.setAttribute("class", "register-text");
+                isAvailableSpan.textContent = "\u00A0is available! Click to register.";
+                innerDiv.appendChild(isAvailableSpan);
+
+                outerDiv.appendChild(innerDiv);
+                outerDiv.setAttribute("class", "outer-domain-div");
+                outerDiv.setAttribute("onclick", `toggleProviderTable('${domain}-list-item')`);
+
+                listItem.appendChild(outerDiv);
+
+                listItem.setAttribute("id", `${domain}-list-item`);
+
+                listItem.appendChild(providerTable);
+                providerTable.style.display = 'none';
+
+                return listItem;
+            }
+            function toggleProviderTable(clickedId){
+                console.log("toggle provider table")
+                console.log('clickedId:', clickedId);
+                const listItem = document.getElementById(clickedId);
+                console.log('listItem:', listItem);
+                const providerTableDiv = listItem.querySelector('.provider-table');
+                console.log('providerTableDiv:', providerTableDiv);
+                const isHidden = providerTableDiv.style.display === 'none';
+
+                console.log("display before change:", providerTableDiv.style.display);
+                providerTableDiv.style.display = isHidden ? 'block' : 'none';
+                console.log("display after change:", providerTableDiv.style.display);
+            }
+            async function createProviderTable(domain) {
+                console.log("create provider table")
+                const response = await fetch(`/get_domain_details?domain=${domain}`);
+                const providerData = await response.json();
+
+                console.log("provider data", providerData);
+
+                const providerTable = document.createElement("table");
+                providerTable.setAttribute("class", "provider-table");
+                
+                // Create header row
+                const headerRow = providerTable.insertRow();
+                const nameHeader = headerRow.insertCell();
+                nameHeader.innerHTML = "<strong>Select Provider:</strong>";
+                const priceHeader = headerRow.insertCell();
+                priceHeader.innerHTML = "";
+                
+                // Create rows for each provider
+                for (const provider of providerData) {
+                    const providerRow = providerTable.insertRow();
+                    
+                    const providerName = providerRow.insertCell();
+                    const providerLink = document.createElement("a");
+                    providerLink.setAttribute("href", provider.url);
+                    providerLink.setAttribute("target", "_blank");
+                    providerLink.innerText = provider.name;
+                    providerLink.setAttribute("class","provider-link");
+                    providerName.appendChild(providerLink);
+                    
+                    const providerPrice = providerRow.insertCell();
+                    providerPrice.innerText = "~"+provider.price;
+                }
+                
+                return providerTable;
+            }
+
+
+
+            async function generateDomainsWithoutExtensions(description, generatedDomainss) {
+                const response = await fetch("/generate_domains_without_extensions", {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ description, generatedDomains}),
+                });
+
+                const data = await response.json();
+                const domains = data.domains;
+                return domains;
+            
+            }
+
+            async function checkAvailability(domain) {
+                const response = await fetch(`/check_availability?domain=${domain}`);
+                const data = await response.json();
+                console.log(domain, data.available);
+                return data.available;
+            }
+
+            function clearDomainList() {
+                console.log("clear domain list")
+                const domainList = document.getElementById("domainList");
+                while (domainList.firstChild) {
+                    domainList.removeChild(domainList.firstChild);
+                }
+                document.getElementById("loadMoreButton").style.display = "none";
+            }
+
+            async function loadMoreDomains() {
+                console.log("load more domains")
+                if (isLoadingMore || !hasGeneratedDomains) {
+                    console.log("Not loading more domains");
+                    return;
+                }
+
+                const distanceToBottom = document.documentElement.scrollHeight - (window.innerHeight + window.scrollY);
+                console.log("Distance to bottom: " + distanceToBottom);
+
+                if (distanceToBottom < 100) {
+                    console.log("Loading more domains");
+                    isLoadingMore = true;
+                    await generateDomainNames();
+                }
+            }
+
+            function showSpinner() {
+                console.log("show spinner")
+                const spinner = document.getElementById("spinner");
+                spinner.style.display = "block";
+            }
+
+            function hideSpinner() {
+                console.log("hide spinner")
+                const spinner = document.getElementById("spinner");
+                spinner.style.display = "none";
+            }
+            //window.addEventListener("scroll", loadMoreDomains);
+        </script>  
+    </div>     
+</body>
+</html>

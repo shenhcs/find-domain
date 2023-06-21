@@ -1,0 +1,14 @@
+https://namecheap.pxf.io/c/173116/386170/5618?u=https%3A%2F%2Fwww.namecheap.com%2Fdomains%2Fregistration%2Fresults.aspx%3Fdomain%3D${domain}
+
+https://click.godaddy.com/affiliate?isc=cjc1off30&url=https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=domain%3D${domain}
+
+                const providerData = [
+                    {
+                    name: "Namecheap",
+                    url: `https://namecheap.pxf.io/c/173116/386170/5618?u=https%3A%2F%2Fwww.namecheap.com%2Fdomains%2Fregistration%2Fresults.aspx%3Fdomain%3D${domain}`,
+                    },
+                    {
+                    name: "GoDaddy",
+                    url: `https://click.godaddy.com/affiliate?isc=cjc1off30&url=https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=domain%3D${domain}`,
+                    },
+                ];

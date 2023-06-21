@@ -1,0 +1,7 @@
+dnspython==2.3.0
+Flask==2.1.1
+Flask_Cors==3.0.10
+openai==0.25.0
+python-dotenv==1.0.0
+python_whois==0.8.0
+whois==0.9.27
