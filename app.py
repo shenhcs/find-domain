@@ -11,12 +11,7 @@ from dotenv import load_dotenv
 from llama_cpp import Llama
 from pathlib import Path
 
-
 load_dotenv()  # This line loads the .env file
-
-api_key = os.environ.get("API_KEY")
-
-openai.api_key = api_key
 
 app = Flask(__name__)
 CORS(app)

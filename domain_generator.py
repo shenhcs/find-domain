@@ -1,4 +1,3 @@
-import openai
 import whois
 import re
 
