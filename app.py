@@ -1,18 +1,18 @@
-from flask import Flask, request, jsonify, render_template
-import openai
-from flask_cors import CORS
-from domain_generator import *
 import whois
 import os
-from dotenv import load_dotenv
 import dns.resolver
 import json
 
+from whois.parser import PywhoisError
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+from domain_generator import *
+from dotenv import load_dotenv
+from llama_cpp import Llama
+from pathlib import Path
+
+
 load_dotenv()  # This line loads the .env file
-
-api_key = os.environ.get("API_KEY")
-
-openai.api_key = api_key
 
 app = Flask(__name__)
 CORS(app)
@@ -50,24 +50,23 @@ extensions = [
 generated_domains = set()
 description = ""
 selectedExtensions = []
-     
+
+
 @app.route("/generate_domains_without_extensions", methods=["POST"])
 def generate_domains_without_extensions_route():
-    print("generate domains without extensions")
+    print("generate_domains_without_extensions_route")
     data = request.get_json()
-
     description = data["description"]
     generated_domains = data["generatedDomains"]
-    num_domains = 100
-    domains = generate_domains_without_extension(description, generated_domains, num_domains)
+    num_domains = 30
+    domains = generate_domains_without_extension(model, description, generated_domains, num_domains)
     print("domains",domains)
 
     return jsonify({"domains": domains})
 
 @app.route("/", methods=["GET"])
 def index():
-        print("index")
-        return render_template("index.html", extensions=extensions)
+    return render_template("index.html", extensions=extensions)
 
 @app.route("/check_availability", methods=["GET"])
 def check_availability():
@@ -78,14 +77,15 @@ def check_availability():
         print("has dns")
         return jsonify({"available": False})
 
-    try:
-        print("does not have dns")
-        w = whois.whois(domain_name)
-        if w.status is None:
-            return jsonify({"available": True})
-        return jsonify({"available": False})
-    except whois.parser.PywhoisError:
-        return jsonify({"available": True})
+    # FIXME: AttributeError: module 'whois' has no attribute 'parser'
+    # try:
+    #     print("does not have dns")
+    #     w = whois.whois(domain_name)
+    #     if w.status is None:
+    #         return jsonify({"available": True})
+    #     return jsonify({"available": False})
+    # except whois.parser.PywhoisError:
+    return jsonify({"available": True})
 
 @app.route("/get_domain_details", methods=["GET"])
 def get_domain_details():
@@ -151,5 +151,16 @@ def has_dns(domain_name):
 
     return false
 
+# TODO: delegate to a server and use API
+def model_init():
+    models_dir = Path('../models')
+    model_name = 'llama-2-7b-chat.Q5_K_S.gguf'
+    return Llama(model_path=str(models_dir/model_name))
+
+def main():
+    app.run(host="0.0.0.0", port=8080, debug=True)
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=80, debug=True)
+    model = model_init()
+    main()
