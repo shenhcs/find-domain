@@ -1,5 +1,9 @@
 import whois
 import re
+import threading
+
+
+model_lock = threading.Lock()
 
 
 def post_proc(output):
@@ -16,6 +20,7 @@ def post_proc(output):
 
 def get_inference(model, description, num_domains=30):
     # TODO: delegate to a server and use API
+    print("Generating domain names...")
     user_prompt = f"Generate {num_domains} domain names for {description}"
 
     prompt = f"\
@@ -26,7 +31,11 @@ def get_inference(model, description, num_domains=30):
     <</SYS>>\
     {user_prompt}[/INST]\
     "
-    return post_proc(model(prompt))
+
+    with model_lock:
+        result = model(prompt)
+
+    return post_proc(result)
 
 
 def generate_domains_without_extension(model, description, num_domains=30, max_retry=10):

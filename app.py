@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from llama_cpp import Llama
 from pathlib import Path
 
+
 load_dotenv()  # This line loads the .env file
 
 app = Flask(__name__)
@@ -49,7 +50,8 @@ extensions = [
 generated_domains = set()
 description = ""
 selectedExtensions = []
-     
+
+
 @app.route("/generate_domains_without_extensions", methods=["POST"])
 def generate_domains_without_extensions_route():
     print("generate_domains_without_extensions_route")
