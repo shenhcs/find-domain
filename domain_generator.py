@@ -16,6 +16,7 @@ def post_proc(output):
 
 
 def get_inference(model, description, num_domains=30):
+    # TODO: delegate to a server and use API
     user_prompt = f"Generate {num_domains} domain names for {description}"
 
     prompt = f"\

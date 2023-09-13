@@ -154,6 +154,7 @@ def has_dns(domain_name):
 
     return false
 
+# TODO: delegate to a server and use API
 def model_init():
     models_dir = Path('../models')
     model_name = 'llama-2-7b-chat.Q5_K_S.gguf'
