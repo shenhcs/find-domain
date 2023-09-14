@@ -59,14 +59,17 @@ def generate_domains_without_extensions_route():
     description = data["description"]
     generated_domains = data["generatedDomains"]
     num_domains = 30
-    domains = generate_domains_without_extension(model, description, generated_domains, num_domains)
-    print("domains",domains)
+    domains = generate_domains_without_extension(
+        model, description, generated_domains, num_domains)
+    print("domains", domains)
 
     return jsonify({"domains": domains})
+
 
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html", extensions=extensions)
+
 
 @app.route("/check_availability", methods=["GET"])
 def check_availability():
@@ -78,14 +81,15 @@ def check_availability():
         return jsonify({"available": False})
 
     # FIXME: AttributeError: module 'whois' has no attribute 'parser'
-    # try:
-    #     print("does not have dns")
-    #     w = whois.whois(domain_name)
-    #     if w.status is None:
-    #         return jsonify({"available": True})
-    #     return jsonify({"available": False})
-    # except whois.parser.PywhoisError:
-    return jsonify({"available": True})
+    try:
+        print("does not have dns")
+        w = whois.whois(domain_name)
+        if w.status is None:
+            return jsonify({"available": True})
+        return jsonify({"available": False})
+    except whois.parser.PywhoisError:
+        return jsonify({"available": True})
+
 
 @app.route("/get_domain_details", methods=["GET"])
 def get_domain_details():
@@ -93,7 +97,7 @@ def get_domain_details():
     domain = request.args.get('domain')
 
     # Get the extension from the domain name
-    #extension = '.' + domain.split('.')[-1]
+    # extension = '.' + domain.split('.')[-1]
     extension = domain.split('.')[-1]
 
     providers = []
@@ -101,19 +105,19 @@ def get_domain_details():
     provider_dict = {
         'name': "NameCheap",
         'url': "https://namecheap.pxf.io/c/173116/386170/5618?u=https%3A%2F%2Fwww.namecheap.com%2Fdomains%2Fregistration%2Fresults.aspx%3Fdomain%3D"+domain,
-        'price': get_price(extension,"NameCheap")
+        'price': get_price(extension, "NameCheap")
     }
     providers.append(provider_dict)
     provider_dict = {
         'name': "GoDaddy",
         'url': "https://click.godaddy.com/affiliate?isc=cjc1off30&url=https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=domain%3D"+domain,
-        'price': get_price(extension,"GoDaddy")
+        'price': get_price(extension, "GoDaddy")
     }
     providers.append(provider_dict)
 
-
     # Return the JSON object
     return json.dumps(providers, indent=2)
+
 
 def get_price(extension, provider):
     # Check if the extension exists in the pricing data
@@ -132,11 +136,11 @@ def get_price(extension, provider):
         # If the extension doesn't exist, return an error message
         return "check registar"
 
+
 def has_dns(domain_name):
     try:
         # query for A record
         dns.resolver.query(domain_name, 'A')
-        return True
     except dns.resolver.NXDOMAIN:
         # domain does not exist
         return False
@@ -149,13 +153,20 @@ def has_dns(domain_name):
     except dns.resolver.NoNameservers:
         return False
 
-    return false
+    return True
 
-# TODO: delegate to a server and use API
+
 def model_init():
-    models_dir = Path('../models')
-    model_name = 'llama-2-7b-chat.Q5_K_S.gguf'
-    return Llama(model_path=str(models_dir/model_name))
+    models_dir = Path('models')
+    model_name = os.getenv("MODEL_NAME")
+    if model_name is None:
+        raise EnvironmentError("MODEL_NAME env not defined.")
+    model_path = models_dir / model_name
+    if not model_path.exists():
+        raise FileNotFoundError(f"Specified model '{model_path}' does not exist.\
+                                Check the path.")
+    return Llama(model_path=model_path.as_posix())
+
 
 def main():
     app.run(host="0.0.0.0", port=8080, debug=True)
