@@ -1,41 +1,88 @@
 import whois
 import re
 import threading
+import os
+import requests
+import json
+
+from dotenv import load_dotenv
 
 
 model_lock = threading.Lock()
 
+load_dotenv()
+llama_api_endpoint = os.getenv("LLAMA_API_ENDPOINT")
+llama_api_key = os.getenv("LLAMA_API_KEY")
 
-def post_proc(output):
-    text = output["choices"][0]["text"]
+
+# TODO: Should be a class...
+
+
+def proc_txt(text):
     if "I apologize" in text:
-        print(f"Inference refused. Output: {output}")
+        print(f"Inference refused. Output: {text}")
         return []
+
     # extract domain names
     dnlist = re.findall(r"(\w+)\.\w+", text)
     # only alphanumeric or hyphen
-    dnlist = [domain for domain in dnlist if re.match(r"^[a-zA-Z0-9-]+$", domain)]
+    dnlist = [domain for domain in dnlist if re.match(
+        r"^[a-zA-Z0-9-]+$", domain)]
     return dnlist
 
 
 def get_inference(model, description, num_domains=30):
-    # TODO: delegate to a server and use API
     print("Generating domain names...")
     user_prompt = f"Generate {num_domains} domain names for {description}"
 
-    prompt = f"\
+    sys_prompt_content = "You are David Ogilvy of domain name generation.\
+    Given a description of business idea, you can think of creative, catchy and fun domain names.\
+    Always answer with a list of domain names without explanation."
+
+    sys_prompt = f"\
     <s>[INST] <<SYS>>\
-    You are a genius generator of domain names, people call you David Ogilvy of doamin name genetation.\
-    Given a description of business idea, you can think of unique, catchy and fun domain names.\
-    Always answer with a list of domain names without explanation.\
+        {sys_prompt_content}\
     <</SYS>>\
     {user_prompt}[/INST]\
     "
 
-    with model_lock:
-        result = model(prompt)
+    use_local_model = False
+    if (llama_api_key is None) or (llama_api_endpoint is None):
+        use_local_model = True
 
-    return post_proc(result)
+    if not use_local_model:
+        try:
+            response = requests.post(
+                llama_api_endpoint,
+                headers={
+                    'accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'api_key': llama_api_key,
+                },
+                json={
+                    "messages": [
+                        {
+                            "content": sys_prompt_content,
+                            "role": "system"
+                        },
+                        {
+                            "content": user_prompt,
+                            "role": "user"
+                        }
+                    ]
+                }
+            )
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            result = response.json()
+            return proc_txt(result["choices"][0]["message"]["content"])
+
+        except requests.RequestException:
+            use_local_model = True
+
+    if use_local_model:
+        with model_lock:
+            result = model(sys_prompt)
+    return proc_txt(result["choices"][0]["text"])
 
 
 def generate_domains_without_extension(model, description, num_domains=30, max_retry=10):
@@ -62,7 +109,8 @@ def generate_domains_without_extension(model, description, num_domains=30, max_r
         retry_count += 1
         print(f"Retrying ({retry_count}/{max_retry})...")
 
-    print(f"Unable to generate {num_good_domains} domains after {max_retry} retries.")
+    print(
+        f"Unable to generate {num_good_domains} domains after {max_retry} retries.")
     return domains
 
 
@@ -90,7 +138,8 @@ def generate_available_domains(model, description, extensions, num_domains=1):
     available_domains = []
     while len(available_domains) < num_domains:
         domains = generate_domains_without_extension(
-            model, description, generated_domains, num_domains - len(available_domains)
+            model, description, generated_domains, num_domains -
+            len(available_domains)
         )
         for domain in domains:
             if domain in generated_domains:
