@@ -59,12 +59,13 @@ def generate_domains_without_extensions_route():
     description = data["description"]
     generated_domains = data["generatedDomains"]
     num_domains = 30
-    domains = generate_domains_without_extension(
-        description, generated_domains, num_domains)
-    print("domains", domains)
-
-    return jsonify({"domains": domains})
-
+    try:
+        domains = generate_domains_without_extension(
+            description, generated_domains, num_domains)
+        return jsonify({"domains": domains})
+    except ValueError as e:
+        # Return a 400 Bad Request status code with an error message
+        return jsonify({"error": str(e)}), 400
 
 @app.route("/", methods=["GET"])
 def index():
