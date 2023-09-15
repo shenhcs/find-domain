@@ -60,7 +60,7 @@ def generate_domains_without_extensions_route():
     generated_domains = data["generatedDomains"]
     num_domains = 30
     domains = generate_domains_without_extension(
-        model, description, generated_domains, num_domains)
+        description, generated_domains, num_domains)
     print("domains", domains)
 
     return jsonify({"domains": domains})
@@ -156,16 +156,16 @@ def has_dns(domain_name):
     return True
 
 
-def model_init():
-    models_dir = Path('models')
-    model_name = os.getenv("MODEL_NAME")
-    if model_name is None:
-        raise EnvironmentError("MODEL_NAME env not defined.")
-    model_path = models_dir / model_name
-    if not model_path.exists():
-        raise FileNotFoundError(f"Specified model '{model_path}' does not exist.\
-                                Check the path.")
-    return Llama(model_path=model_path.as_posix())
+# def model_init():
+#     models_dir = Path('models')
+#     model_name = os.getenv("MODEL_NAME")
+#     if model_name is None:
+#         raise EnvironmentError("MODEL_NAME env not defined.")
+#     model_path = models_dir / model_name
+#     if not model_path.exists():
+#         raise FileNotFoundError(f"Specified model '{model_path}' does not exist.\
+#                                 Check the path.")
+#     return Llama(model_path=model_path.as_posix())
 
 
 def main():
@@ -173,5 +173,5 @@ def main():
 
 
 if __name__ == "__main__":
-    model = model_init()
+    # model = model_init()
     main()

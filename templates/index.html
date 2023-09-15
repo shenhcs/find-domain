@@ -27,7 +27,10 @@
         <div class="input-form">
             <h1>✨FindDomain.AI✨</h1>
             <p>Describe your project:</p>
-            <textarea id="description" rows="4" cols="50"></textarea><br>
+            <div class="textarea-container">
+                <textarea id="description" rows="4" cols="50" maxlength="256" oninput="updateCounter()"></textarea><br>
+                <span id="charCounter">0 / 256</span>
+            </div>
 
             <p>Select extensions:</p>
             <div class="extensions-wrapper">
@@ -58,6 +61,18 @@
 </div>
 
         <script>
+            window.onload = function() {
+                const textarea = document.getElementById("description");
+                textarea.value = "";
+                updateCounter();
+            }
+
+            function updateCounter() {
+                const description = document.getElementById("description");
+                const counter = document.getElementById("charCounter");
+                counter.textContent = `${description.value.length} / 256`;
+            }
+
             //flags
             let isLoadingMore = false;
             let hasGeneratedDomains = false;
