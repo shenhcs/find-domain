@@ -56,7 +56,10 @@
             <br/>
             <div class="lds-ring loader"></div>
         </div>
-            
+
+        <div id="errorMessage">
+        </div>
+
         <button id="loadMoreButton" onclick="loadMoreDomains()" style="display: none;">🙏Load More🙏</button>
 </div>
 
@@ -84,6 +87,7 @@
                 console.log("generate new domain list");
                 clearDomainList();
                 generatedDomainsWithoutExtensions.clear();
+                clearErrorMessage();
 
                 description = document.getElementById("description").value;
                 console.log("description",description)
@@ -120,21 +124,32 @@
                         response = await fetch("/generate_domains_without_extensions", {
                             method: "POST",
                             headers: {
-                            "Content-Type": "application/json",
+                                "Content-Type": "application/json",
                             },
                             body: JSON.stringify({
                                 description: description,
                                 generatedDomains: Array.from(generatedDomainsWithoutExtensions),
-                                }),
-                            });
-                            data = await response.json();
-                            console.log("data",data);
+                            }),
+                        });
+
+                        data = await response.json();  // Parse the JSON response once
+                        console.log("data", data);
+
+                        if (!response.ok) {
+                            if (data.error && data.error.includes("Bad description")) {
+                                console.error("Bad description.");
+                                // Display the error message to the user
+                                displayErrorMessage("Hmm,.. that description seems a bit off. Wanna tweak it and try again? 🤔");
+                                break;
+                            } else {
+                                console.error("An unknown error occurred.");
+                            }
+                        }
                     } catch (error) {
                         retries++;
                         console.error(`Error fetching domains: ${error.message}. Retrying ${10 - retries} more times...`);
                         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retrying
                     }
-
 
                     const domainsWithoutExtensions = data.domains;
                     console.log("domainsWithoutExtensions",domainsWithoutExtensions)
@@ -176,7 +191,7 @@
                 }
 
                 console.log("No available domains found.");
-                document.getElementById("loadMoreButton").style.display = "block";
+                document.getElementById("loadMoreButton").style.display = "none";
                 hideSpinner();
                 
             }
@@ -331,6 +346,17 @@
                 const spinner = document.getElementById("spinner");
                 spinner.style.display = "none";
             }
+
+            function displayErrorMessage(message) {
+                const errorMessageElement = document.getElementById("errorMessage");
+                errorMessageElement.textContent = message;
+            }
+
+            function clearErrorMessage() {
+                const errorMessageElement = document.getElementById("errorMessage");
+                errorMessageElement.textContent = "";
+            }
+
             //window.addEventListener("scroll", loadMoreDomains);
         </script>  
     </div>     

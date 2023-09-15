@@ -23,10 +23,12 @@ if os.getenv("OPENAI_API_KEY") is None:
 
 # TODO: Should be a class...
 
+BAD_DESCRIPTION="Bad description"
 
 def proc_txt(text):
-    if "Desctiption not valid" in text:
-        raise ValueError(f"Provided text is not a valid description.")
+    print(text)
+    if BAD_DESCRIPTION in text:
+        raise ValueError(BAD_DESCRIPTION)
 
     # extract domain names
     dnlist = [item.strip() for item in text.split(",")]
@@ -40,16 +42,12 @@ def get_inference(description, num_domains=50):
     print("Generating domain names...")
     user_prompt = f"```{description}```"
 
-    # sys_prompt_content = f"You will be provided You are David Ogilvy of domain name generation.\
-    # Given a description of business idea after `:`, you can think of creative, catchy and fun domain names.\
-    # Always answer with a list of {num_domains} domain names without explanation."
-
     sys_prompt_content = f"You are David Ogilvy of domain name generation.\
     You will be provided with a text with description of a business idea, activity delimited by triple backticks.\
     If the text contains a description, generate a list of {num_domains} creative, catchy and fun domain names.\
-    Provide them in comma separated values without any explanation.\
-    Each name should not contain domain extension nor be lowercased.\
-    If the text does not contain a description, simply write \"Desctiption not valid.\"\
+    Provide them in mix of upper and lowercase.\
+    Provide them in comma separated values without domain extension.\
+    If the text does not contain a description, simply write \"{BAD_DESCRIPTION}\"\
     "
 
     headers = {
@@ -61,64 +59,18 @@ def get_inference(description, num_domains=50):
         "messages": [
             {"role": "system", "content": sys_prompt_content},
             {"role": "user", "content": user_prompt}
-        ]
+        ],
+        "temperature": 0.9
     }
 
     response = requests.post(openai_api_endpoint, headers=headers, json=data)
     response.raise_for_status()
 
     completion = response.json()
+    # print(completion)
     result = proc_txt(completion['choices'][0]['message']['content'])
     return result
 
-
-######### LLAMA2 + local inference code #######
-    # sys_prompt = f"\
-    # <s>[INST] <<SYS>>\
-    #     {sys_prompt_content}\
-    # <</SYS>>\
-    # {user_prompt}[/INST]\
-    # "
-
-    # use_local_model = False
-    # if (llama_api_key is None) or (llama_api_endpoint is None):
-    #     use_local_model = True
-
-    # if not use_local_model:
-    #     try:
-    #         response = requests.post(
-    #             llama_api_endpoint,
-    #             headers={
-    #                 'accept': 'application/json',
-    #                 'Content-Type': 'application/json',
-    #                 'api_key': llama_api_key,
-    #             },
-    #             json={
-    #                 "messages": [
-    #                     {
-    #                         "content": sys_prompt_content,
-    #                         "role": "system"
-    #                     },
-    #                     {
-    #                         "content": user_prompt,
-    #                         "role": "user"
-    #                     }
-    #                 ]
-    #             }
-    #         )
-    #         response.raise_for_status()  # Raise an exception for HTTP errors
-    #         result = response.json()
-    #         return proc_txt(result["choices"][0]["message"]["content"])
-
-    #     except requests.RequestException:
-    #         use_local_model = True
-
-    # if use_local_model:
-    #     with model_lock:
-    #         result = model(sys_prompt)
-    # return proc_txt(result["choices"][0]["text"])
-
-######### LLAMA2 + local inference code #######
 
 def generate_domains_without_extension(description, num_domains=30, max_retry=3):
     print("generate_domains_without_extension")
@@ -130,7 +82,7 @@ def generate_domains_without_extension(description, num_domains=30, max_retry=3)
     domains = []
     while retry_count < max_retry:
         generated_domains = get_inference(description, num_domains)
-        print(f'Generated domains: {generated_domains}')
+        # print(f'Generated domains: {generated_domains}')
 
         if len(generated_domains) == 0:
             print("No domains generated.")
@@ -167,32 +119,32 @@ def check_domain_availability(domain_name):
         return True
 
 
-def generate_available_domains(description, extensions, num_domains=1):
-    print("generate available domains")
-    generated_domains = set()
-    available_domains = []
-    while len(available_domains) < num_domains:
-        try:
-            domains = generate_domains_without_extension(
-                description, generated_domains, num_domains -
-                len(available_domains)
-            )
-        except ValueError as e:
-            print(f"Error: {e}")
-            return available_domains
-        for domain in domains:
-            if domain in generated_domains:
-                continue
-            generated_domains.add(domain)
-            for extension in extensions:
-                domain_with_extension = domain + extension
-                if check_domain_availability(domain_with_extension):
-                    print(f"{domain_with_extension} is available")
-                    available_domains.append(domain_with_extension)
-                    if len(available_domains) == num_domains:
-                        break
-                else:
-                    print(f"{domain_with_extension} is NOT available")
-            if len(available_domains) == num_domains:
-                break
-    return available_domains
+# def generate_available_domains(description, extensions, num_domains=1):
+#     print("generate available domains")
+#     generated_domains = set()
+#     available_domains = []
+#     while len(available_domains) < num_domains:
+#         try:
+#             domains = generate_domains_without_extension(
+#                 description, generated_domains, num_domains -
+#                 len(available_domains)
+#             )
+#         except ValueError as e:
+#             print(f"Error: {e}")
+#             return available_domains
+#         for domain in domains:
+#             if domain in generated_domains:
+#                 continue
+#             generated_domains.add(domain)
+#             for extension in extensions:
+#                 domain_with_extension = domain + extension
+#                 if check_domain_availability(domain_with_extension):
+#                     print(f"{domain_with_extension} is available")
+#                     available_domains.append(domain_with_extension)
+#                     if len(available_domains) == num_domains:
+#                         break
+#                 else:
+#                     print(f"{domain_with_extension} is NOT available")
+#             if len(available_domains) == num_domains:
+#                 break
+#     return available_domains

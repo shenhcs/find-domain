@@ -227,3 +227,12 @@ table {
   color: var(--light-grey);
   margin-top: 5px; /* Optional: add some space between the textarea and the counter */
 }
+
+#errorMessage {
+  margin-top: 20px;
+  color: rgb(28, 194, 56);
+  margin-bottom: 10px;
+}
+#errorMessage:empty {
+  margin-top: 0;
+}
