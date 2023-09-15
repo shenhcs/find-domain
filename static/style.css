@@ -214,3 +214,16 @@ table {
   color: #283a4c  ;
   font-weight: normal;
 }
+.textarea-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+#charCounter {
+  text-align: right;
+  font-size: 1.0rem; /* slightly smaller font size for the counter */
+  color: var(--light-grey);
+  margin-top: 5px; /* Optional: add some space between the textarea and the counter */
+}

@@ -4,6 +4,7 @@ import threading
 import os
 import requests
 import json
+import openai
 
 from dotenv import load_dotenv
 
@@ -13,6 +14,11 @@ model_lock = threading.Lock()
 load_dotenv()
 llama_api_endpoint = os.getenv("LLAMA_API_ENDPOINT")
 llama_api_key = os.getenv("LLAMA_API_KEY")
+openai_api_endpoint = "https://api.openai.com/v1/chat/completions"
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if os.getenv("OPENAI_API_KEY") is None:
+    raise EnvironmentError("OPENAI_API_KEY env not defined.")
 
 
 # TODO: Should be a class...
@@ -31,61 +37,88 @@ def proc_txt(text):
     return dnlist
 
 
-def get_inference(model, description, num_domains=30):
+def get_inference(description, num_domains=50):
     print("Generating domain names...")
-    user_prompt = f"Generate {num_domains} domain names for {description}"
+    user_prompt = f"Generate domain names for {description}"
 
-    sys_prompt_content = "You are David Ogilvy of domain name generation.\
+    sys_prompt_content = f"You are David Ogilvy of domain name generation.\
     Given a description of business idea, you can think of creative, catchy and fun domain names.\
-    Always answer with a list of domain names without explanation."
+    Always answer with a list of {num_domains} domain names without explanation."
 
-    sys_prompt = f"\
-    <s>[INST] <<SYS>>\
-        {sys_prompt_content}\
-    <</SYS>>\
-    {user_prompt}[/INST]\
-    "
+    headers = {
+        "Authorization": f"Bearer {openai_api_key}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": sys_prompt_content},
+            {"role": "user", "content": user_prompt}
+        ]
+    }
 
-    use_local_model = False
-    if (llama_api_key is None) or (llama_api_endpoint is None):
-        use_local_model = True
-
-    if not use_local_model:
-        try:
-            response = requests.post(
-                llama_api_endpoint,
-                headers={
-                    'accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'api_key': llama_api_key,
-                },
-                json={
-                    "messages": [
-                        {
-                            "content": sys_prompt_content,
-                            "role": "system"
-                        },
-                        {
-                            "content": user_prompt,
-                            "role": "user"
-                        }
-                    ]
-                }
-            )
-            response.raise_for_status()  # Raise an exception for HTTP errors
-            result = response.json()
-            return proc_txt(result["choices"][0]["message"]["content"])
-
-        except requests.RequestException:
-            use_local_model = True
-
-    if use_local_model:
-        with model_lock:
-            result = model(sys_prompt)
-    return proc_txt(result["choices"][0]["text"])
+    response = requests.post(openai_api_endpoint, headers=headers, json=data)
+    print(response.json())
+    # Check the response
+    if response.status_code == 200:
+        completion = response.json()
+        # Extract the message from the completion if needed
+        return proc_txt(completion['choices'][0]['message']['content'])
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.text)
+    return []
 
 
-def generate_domains_without_extension(model, description, num_domains=30, max_retry=10):
+######### LLAMA2 + local inference code #######
+    # sys_prompt = f"\
+    # <s>[INST] <<SYS>>\
+    #     {sys_prompt_content}\
+    # <</SYS>>\
+    # {user_prompt}[/INST]\
+    # "
+
+    # use_local_model = False
+    # if (llama_api_key is None) or (llama_api_endpoint is None):
+    #     use_local_model = True
+
+    # if not use_local_model:
+    #     try:
+    #         response = requests.post(
+    #             llama_api_endpoint,
+    #             headers={
+    #                 'accept': 'application/json',
+    #                 'Content-Type': 'application/json',
+    #                 'api_key': llama_api_key,
+    #             },
+    #             json={
+    #                 "messages": [
+    #                     {
+    #                         "content": sys_prompt_content,
+    #                         "role": "system"
+    #                     },
+    #                     {
+    #                         "content": user_prompt,
+    #                         "role": "user"
+    #                     }
+    #                 ]
+    #             }
+    #         )
+    #         response.raise_for_status()  # Raise an exception for HTTP errors
+    #         result = response.json()
+    #         return proc_txt(result["choices"][0]["message"]["content"])
+
+    #     except requests.RequestException:
+    #         use_local_model = True
+
+    # if use_local_model:
+    #     with model_lock:
+    #         result = model(sys_prompt)
+    # return proc_txt(result["choices"][0]["text"])
+
+######### LLAMA2 + local inference code #######
+
+def generate_domains_without_extension(description, num_domains=30, max_retry=3):
     print("generate_domains_without_extension")
     num_good_domains = 10
     # Clean up the description
@@ -94,7 +127,7 @@ def generate_domains_without_extension(model, description, num_domains=30, max_r
     retry_count = 0
     domains = []
     while retry_count < max_retry:
-        generated_domains = get_inference(model, description, num_domains)
+        generated_domains = get_inference(description, num_domains)
         print(f'Generated domains: {generated_domains}')
 
         if len(generated_domains) == 0:
@@ -132,13 +165,13 @@ def check_domain_availability(domain_name):
         return True
 
 
-def generate_available_domains(model, description, extensions, num_domains=1):
+def generate_available_domains(description, extensions, num_domains=1):
     print("generate available domains")
     generated_domains = set()
     available_domains = []
     while len(available_domains) < num_domains:
         domains = generate_domains_without_extension(
-            model, description, generated_domains, num_domains -
+            description, generated_domains, num_domains -
             len(available_domains)
         )
         for domain in domains:
