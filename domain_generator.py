@@ -23,10 +23,11 @@ if os.getenv("OPENAI_API_KEY") is None:
 
 # TODO: Should be a class...
 
-BAD_DESCRIPTION="Bad description"
+BAD_DESCRIPTION = "Bad description"
+
 
 def proc_txt(text):
-    #print(text)
+    # print(text)
     if BAD_DESCRIPTION in text:
         raise ValueError(BAD_DESCRIPTION)
 
@@ -67,13 +68,13 @@ def get_inference(description, num_domains=40):
     response.raise_for_status()
 
     completion = response.json()
-    print("completion:",completion)
+    print("completion:", completion)
     result = proc_txt(completion['choices'][0]['message']['content'])
     return result
 
 
 def generate_domains_without_extension(description, num_domains=30, max_retry=3):
-    #print("generate_domains_without_extension")
+    # print("generate_domains_without_extension")
     num_good_domains = 10
     # Clean up the description
     description = re.sub(r"[^a-zA-Z0-9\s-]", "", description)
@@ -111,7 +112,7 @@ def add_extensions(domains_without_extensions, extensions):
 
 
 def check_domain_availability(domain_name):
-    #print("check domain availibility")
+    # print("check domain availibility")
     try:
         w = whois.whois(domain_name)
         return False

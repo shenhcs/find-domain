@@ -67,6 +67,7 @@ def generate_domains_without_extensions_route():
         # Return a 400 Bad Request status code with an error message
         return jsonify({"error": str(e)}), 400
 
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html", extensions=extensions)
@@ -74,7 +75,7 @@ def index():
 
 @app.route("/check_availability", methods=["GET"])
 def check_availability():
-    #print("check availibility")
+    # print("check availibility")
     domain_name = request.args.get("domain")
 
     if has_dns(domain_name):
