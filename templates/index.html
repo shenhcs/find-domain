@@ -193,13 +193,19 @@
                 const providerTable = await createProviderTable(domain);
 
                 innerDiv.setAttribute("class", "inner-domain-div");
+                innerDiv.addEventListener("contextmenu", (e) => e.preventDefault());
 
                 domainSpan.setAttribute("class", "domain-text");
                 domainSpan.textContent = domain.trim();
+                domainSpan.style.userSelect = "none";
+                domainSpan.addEventListener("contextmenu", (e) => e.preventDefault());
+
                 innerDiv.appendChild(domainSpan);
 
                 isAvailableSpan.setAttribute("class", "register-text");
                 isAvailableSpan.textContent = "\u00A0is available! Click to register.";
+                isAvailableSpan.style.userSelect = "none";
+                isAvailableSpan.addEventListener("contextmenu", (e) => e.preventDefault());
                 innerDiv.appendChild(isAvailableSpan);
 
                 outerDiv.appendChild(innerDiv);

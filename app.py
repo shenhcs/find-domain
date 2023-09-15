@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from domain_generator import *
 from dotenv import load_dotenv
-#from llama_cpp import Llama
+# from llama_cpp import Llama
 from pathlib import Path
 
 
@@ -80,7 +80,6 @@ def check_availability():
         print("has dns")
         return jsonify({"available": False})
 
-    # FIXME: AttributeError: module 'whois' has no attribute 'parser'
     try:
         print("does not have dns")
         w = whois.whois(domain_name)
