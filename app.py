@@ -61,7 +61,7 @@ def generate_domains_without_extensions_route():
     num_domains = 30
     try:
         domains = generate_domains_without_extension(
-            description, generated_domains, num_domains)
+            description, num_domains)
         return jsonify({"domains": domains})
     except ValueError as e:
         # Return a 400 Bad Request status code with an error message
@@ -74,7 +74,7 @@ def index():
 
 @app.route("/check_availability", methods=["GET"])
 def check_availability():
-    print("check availibility")
+    #print("check availibility")
     domain_name = request.args.get("domain")
 
     if has_dns(domain_name):
