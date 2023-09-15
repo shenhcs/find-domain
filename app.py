@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from domain_generator import *
 from dotenv import load_dotenv
-from llama_cpp import Llama
+#from llama_cpp import Llama
 from pathlib import Path
 
 
@@ -169,7 +169,7 @@ def has_dns(domain_name):
 
 
 def main():
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=80, debug=True)
 
 
 if __name__ == "__main__":

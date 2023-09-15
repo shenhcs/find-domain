@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 model_lock = threading.Lock()
 
 load_dotenv()
-llama_api_endpoint = os.getenv("LLAMA_API_ENDPOINT")
-llama_api_key = os.getenv("LLAMA_API_KEY")
+#llama_api_endpoint = os.getenv("LLAMA_API_ENDPOINT")
+#llama_api_key = os.getenv("LLAMA_API_KEY")
 openai_api_endpoint = "https://api.openai.com/v1/chat/completions"
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
