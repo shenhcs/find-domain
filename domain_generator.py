@@ -25,12 +25,11 @@ if os.getenv("OPENAI_API_KEY") is None:
 
 
 def proc_txt(text):
-    if "I apologize" in text:
-        print(f"Inference refused. Output: {text}")
-        return []
+    if "Desctiption not valid" in text:
+        raise ValueError(f"Provided text is not a valid description.")
 
     # extract domain names
-    dnlist = re.findall(r"(\w+)\.\w+", text)
+    dnlist = [item.strip() for item in text.split(",")]
     # only alphanumeric or hyphen
     dnlist = [domain for domain in dnlist if re.match(
         r"^[a-zA-Z0-9-]+$", domain)]
@@ -39,11 +38,19 @@ def proc_txt(text):
 
 def get_inference(description, num_domains=50):
     print("Generating domain names...")
-    user_prompt = f"Generate domain names for {description}"
+    user_prompt = f"```{description}```"
+
+    # sys_prompt_content = f"You will be provided You are David Ogilvy of domain name generation.\
+    # Given a description of business idea after `:`, you can think of creative, catchy and fun domain names.\
+    # Always answer with a list of {num_domains} domain names without explanation."
 
     sys_prompt_content = f"You are David Ogilvy of domain name generation.\
-    Given a description of business idea, you can think of creative, catchy and fun domain names.\
-    Always answer with a list of {num_domains} domain names without explanation."
+    You will be provided with a text with description of a business idea, activity delimited by triple backticks.\
+    If the text contains a description, generate a list of {num_domains} creative, catchy and fun domain names.\
+    Provide them in comma separated values without any explanation.\
+    Each name should not contain domain extension nor be lowercased.\
+    If the text does not contain a description, simply write \"Desctiption not valid.\"\
+    "
 
     headers = {
         "Authorization": f"Bearer {openai_api_key}",
@@ -58,16 +65,11 @@ def get_inference(description, num_domains=50):
     }
 
     response = requests.post(openai_api_endpoint, headers=headers, json=data)
-    print(response.json())
-    # Check the response
-    if response.status_code == 200:
-        completion = response.json()
-        # Extract the message from the completion if needed
-        return proc_txt(completion['choices'][0]['message']['content'])
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-    return []
+    response.raise_for_status()
+
+    completion = response.json()
+    result = proc_txt(completion['choices'][0]['message']['content'])
+    return result
 
 
 ######### LLAMA2 + local inference code #######
@@ -170,10 +172,14 @@ def generate_available_domains(description, extensions, num_domains=1):
     generated_domains = set()
     available_domains = []
     while len(available_domains) < num_domains:
-        domains = generate_domains_without_extension(
-            description, generated_domains, num_domains -
-            len(available_domains)
-        )
+        try:
+            domains = generate_domains_without_extension(
+                description, generated_domains, num_domains -
+                len(available_domains)
+            )
+        except ValueError as e:
+            print(f"Error: {e}")
+            return available_domains
         for domain in domains:
             if domain in generated_domains:
                 continue
