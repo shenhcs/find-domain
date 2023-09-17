@@ -1,93 +1,121 @@
-:root {
-  --main-background-color: #1A1A1D;
-  --container-color: #343477;
-  --accent-color: #ff4742;
-  --main-text-color: #e8e8e8;
-  --border-radius: 5px;
-  --light-grey: #e8e8e8;
-  font-family: GB Museo Sans, Arial, Helvetica, sans-serif;
+@font-face {
+  font-family: 'Kongtext', 'Press Start 2P', 'Courier New', monospace, sans-serif;
+  src: url('fonts/Kongtext.ttf') format('truetype');
 }
 
-h1 {
-  font-family: 'Nunito', sans-serif;
-  text-align: center;
+@font-face {
+  font-family: 'Joystix';
+  src: url('fonts/Joystix.ttf') format('truetype');
 }
+
+
+:root {
+  --main-container-background-color: #E0E0D6;
+  --default-font: 'Kongtext', 'Press Start 2P', 'Courier New', monospace, sans-serif;
+}
+
 
 body {
-  font-weight: bold;
-  margin: 0;
-  min-height: 100vh;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: var(--main-background-color);
-  color: var(--main-text-color);
 }
 
-.container {
+/* Main container */
+.nes-container.with-title.is-centered {
+  background-color:  var(--main-container-background-color);
   max-width: 800px;
-  width: 100%;
-  padding: 20px;
-  box-sizing: border-box;
-  border-radius: 10px;
-  background-color: var(--container-color);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
+  margin-top: 50px;
+  margin-bottom: 35px;
+}
+/* Main container END */
+
+
+label[for="headline2"] {
+  display: block;
+  text-align: left;
+  font-weight: bold;
+}
+
+#charCounter {
+  display: block;
+  text-align: right;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  color: #666666;
+}
+
+/* Extension checkbox */
+.extensions-wrapper {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
-
-.container h1 {
-  font-size: 2rem;
-  margin-bottom: 20px;
+.custom-extension {
+  margin-right: 5px;
 }
-
-.container p,
-.container label {
-  font-size: 1rem;
+#customExtensionCheckbox + span {
+  background-color: inherit;
+}
+#customExtensionInput {
+  width: 202px;
+  height: 30px;
+  margin-left: 0;
+  padding-left: 0;
+}
+#customExtensionInput::placeholder {
+  font-size: 12px;
+}
+.nes-checkbox + span {
+  background-color: #FFF;
+  margin-left: 0;
+  padding-left: 0;
+}
+.extension-label {
+  display: flex;
+  width: auto;
+  text-align: left;
+  vertical-align: top;
+  margin-right: 12px;
+  margin-top: 10px;
   margin-bottom: 10px;
+  white-space: nowrap;
 }
-
-.container textarea,
-.container input[type="checkbox"],
-.container button {
-  font-size: 1rem;
-  display: flex;
+.extension-label:last-child {
   width: 100%;
 }
+/* Extension checkbox END */
 
 
-
-textarea {
-  max-width: 100%;
+#generateButton {
+  color: #000000;
+  margin-bottom: 18px;
 }
 
-button {
-  font-family: 'Nunito', sans-serif;
-  background-color: var(--accent-color);
-  color: var(--main-text-color);
-  border: none;
-  border-radius: 5px;
-  text-align: center;
-  padding: 12px;
-  font-weight: bold;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
 
-button:hover,
-a:hover {
-  background-color: #F2AA4C;
-  color: var(--main-text-color);
+/* Spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
-
-a {
-  color: #614be0;
-  font-weight: normal;
+.loader {
+  width: 40px;
+  height: 40px;
+  border: 5px solid #FFF;
+  border-bottom-color: #9B1438;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: spin 1s linear infinite;
 }
+/* Spinner END */
 
+
+/* Domain list */
 ul {
   list-style-type: none;
   padding: 0;
@@ -106,52 +134,22 @@ ul li:last-child {
 }
 
 ul li:hover {
-  background-color: #5a5a5a;
-  color: #ffffff;
-}
-
-.extensions-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.extension-label {
-  display: flex;
-  align-items: center;
-  margin-right: 10px;
-  white-space: nowrap;
+  background-color: #FFFFFF;
+  color: #000000;
 }
 
 .register-text,
 .availible-text {
   font-style: italic;
   font-weight: normal;
-  color: #F2AA4C;
+  color: #CC5500;
+  font-size: 13px;
 }
 
 .domain-text {
   font-weight: normal;
-  color: greenyellow;
-}
-
-.loader {
-  width: 40px;
-  height: 40px;
-  border: 5px solid #FFF;
-  border-bottom-color: #FF3D00;
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  color: #6B8E23;
+  text-shadow: 1px 1px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;
 }
 
 .inner-domain-div {
@@ -171,6 +169,30 @@ ul li:hover {
   flex-wrap: wrap;
 }
 
+/*CTA Select Provider*/
+.nameHeader {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #333333;
+  padding: 2px;
+  padding-left: 10px;
+  letter-spacing: 1px;
+}
+a {
+  /*GoDaddy*/
+  color: #614be0;
+  font-weight: normal;
+  text-decoration: underline;
+}
+a:hover {
+  background-color: #f2a640;
+}
+
+.provider-table {
+  background-color: #D0D0C6;
+  border-radius: 8px;
+  overflow: hidden;
+}
 .provider-row {
   display: flex;
   justify-content: space-between;
@@ -178,61 +200,18 @@ ul li:hover {
   padding: 5px;
   border-top: 1px solid #ddd;
 }
-
 .provider-name {
   font-weight: bold;
+  text-decoration: underline;
 }
-
 .provider-price {
   color: #777;
 }
 
-.providers {
-  display: none;
-  margin-top: 5px;
-  padding: 5px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-#customExtensionInput {
-  width: 100px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-left: 5px;
-}
-
-.provider-table {
-  display: none;
-  background-color: #e8e8e8;
-  border-radius: 8px;
-  padding: 8px;
-}
-
-table {
-  color: #283a4c  ;
-  font-weight: normal;
-}
-.textarea-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-#charCounter {
-  text-align: right;
-  font-size: 1.0rem; /* slightly smaller font size for the counter */
-  color: var(--light-grey);
-  margin-top: 5px; /* Optional: add some space between the textarea and the counter */
-}
-
-#errorMessage {
-  margin-top: 20px;
-  color: rgb(28, 194, 56);
-  margin-bottom: 10px;
-}
-#errorMessage:empty {
-  margin-top: 0;
+#loadMoreButton {
+  color: black;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 18px;
 }
