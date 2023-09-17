@@ -16,17 +16,19 @@
 
 
 body {
-  display: flex;
+  display: block;
+  justify-content: center;
   align-items: center;
+  margin: 0; /* Reset browser default margin if any */
+  padding: 14px;
+  overflow: auto;
 }
 
 /* Main container */
 .nes-container.with-title.is-centered {
   background-color:  var(--main-container-background-color);
   max-width: 800px;
-  margin: 0 auto;
-  margin-top: 50px;
-  margin-bottom: 35px;
+  margin: 50px auto;
 }
 /* Main container END */
 

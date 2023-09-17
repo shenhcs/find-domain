@@ -117,6 +117,12 @@
 
                 console.log("selected extensions", selectedExtensions)
 
+                // Check if selectedExtensions is empty
+                if (selectedExtensions.length === 0) {
+                    displayMessageWithBcrikko("Let's picking an extension before we roll?");
+                    return;
+                }
+
                 await generateDomainNames();
             }
 
