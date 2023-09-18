@@ -12,55 +12,58 @@
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>finddomain.ai</title>
+    <title>FindDomain.AI</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/kongtext" rel="stylesheet">
+    <link href="https://unpkg.com/nes.css@latest/css/nes.min.css" rel="stylesheet" />
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:wght@400;700&display=swap">
+
     <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="98e2b694-2a88-419b-a432-072f1e8def0e";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="./myIcon.ico?" type="image/x-icon">
-    <link rel="shortcut icon" href="./myIcon.ico?" type="image/x-icon">    
+    <link rel="icon" href="../static/favicons/mario_star.ico" type="image/x-icon">
+
 </head>
 <body>
-    <div class="container">
+    <div class="nes-container with-title is-centered">
         <!-- Your content goes here -->
         <div class="content-wrapper">
         <div class="input-form">
-            <h1>✨FindDomain.AI✨</h1>
-            <p>Describe your project:</p>
-            <div class="textarea-container">
-                <textarea id="description" rows="4" cols="50" maxlength="256" oninput="updateCounter()"></textarea><br>
+            <h1><i class="nes-icon star"></i> FindDomain.AI <i class="nes-icon star"></i></h1>
+            <br>
+            <label for="headline2">Describe your project:</label>
+                <textarea id="description" class="nes-textarea" rows="4" cols="50" maxlength="256" oninput="updateCounter()"></textarea><br>
                 <span id="charCounter">0 / 256</span>
-            </div>
-
-            <p>Select extensions:</p>
+            <br>
+            
+            <label for="headline2">Select extensions:</label>
             <div class="extensions-wrapper">
                 {% for extension in extensions %}
                     <label class="extension-label">
-                        <input type="checkbox" id="{{ extension }}" name="{{ extension }}" value="{{ extension }}" {% if loop.first %}checked{% endif %}>
-                        {{ extension }}
+                        <input type="checkbox" class="nes-checkbox" id="{{ extension }}" name="{{ extension }}" value="{{ extension }}" {% if loop.first %}checked{% endif %}>
+                        <span>{{ extension }}</span>
                     </label>
                 {% endfor %}
                 <label class="extension-label">
-                    <input type="checkbox" id="customExtensionCheckbox">
-                    Custom:&nbsp;
-                    <input type="text" id="customExtensionInput" placeholder="Enter extension">
+                    <input type="checkbox" class="nes-checkbox" id="customExtensionCheckbox">
+                    <span class="custom-extension">Custom:</span>
+                    <input type="text" id="customExtensionInput" class="nes-input" placeholder="Enter extension">
                 </label>
             </div>
-
-            <br><br>
-            <button id="generateButton" onclick="generateNewDomainList()">🔮Find Availible Domain Names🔮</button>
+            
+            <br>
+            <button class="nes-btn is-primary" id="generateButton" onclick="generateNewDomainList()">Find Availible Domain Names</button>
         </div>
+
         <ul id="domainList"></ul>
 
         <div id="spinner" style="display: none;">
-            <br/>
-            <div class="lds-ring loader"></div>
         </div>
 
         <div id="errorMessage">
         </div>
 
-        <button id="loadMoreButton" onclick="loadMoreDomains()" style="display: none;">🙏Load More🙏</button>
+        <button id="loadMoreButton" class="nes-btn is-success" onclick="loadMoreDomains()" style="display: none;">Load More</button>
 </div>
 
         <script>
@@ -87,23 +90,37 @@
                 console.log("generate new domain list");
                 clearDomainList();
                 generatedDomainsWithoutExtensions.clear();
-                clearErrorMessage();
+                // Remove the bcrikko message container if it exists
+                const existingContainer = document.querySelector(".bcrikko-message-container");
+                if (existingContainer) {
+                    existingContainer.remove();
+                }
 
                 description = document.getElementById("description").value;
                 console.log("description",description)
                 const checkboxes = document.querySelectorAll("input[type=checkbox]:checked");
                 selectedExtensions = Array.from(checkboxes).map(checkbox => checkbox.value);
                 
-                //handles custom extension checkbox
+                // handles custom extension checkbox
                 const customCheckbox = document.getElementById("customExtensionCheckbox");
                 if (customCheckbox.checked) {
-                    const customExtension = document.getElementById("customExtensionInput").value;
+                    let customExtension = document.getElementById("customExtensionInput").value;
                     if (customExtension !== "") {
+                        // Check if customExtension starts with a dot, if not, prepend it
+                        if (!customExtension.startsWith('.')) {
+                            customExtension = '.' + customExtension;
+                        }
                         selectedExtensions.push(customExtension);
                     }
                 }
 
                 console.log("selected extensions", selectedExtensions)
+
+                // Check if selectedExtensions is empty
+                if (selectedExtensions.length === 0) {
+                    displayMessageWithBcrikko("Let's picking an extension before we roll?");
+                    return;
+                }
 
                 await generateDomainNames();
             }
@@ -139,7 +156,7 @@
                             if (data.error && data.error.includes("Bad description")) {
                                 console.error("Bad description.");
                                 // Display the error message to the user
-                                displayErrorMessage("Hmm,.. that description seems a bit off. Wanna tweak it and try again? 🤔");
+                                displayMessageWithBcrikko("Hmm,.. that description seems a bit off. Wanna tweak it and try again?");
                                 break;
                             } else {
                                 console.error("An unknown error occurred.");
@@ -262,7 +279,8 @@
                 // Create header row
                 const headerRow = providerTable.insertRow();
                 const nameHeader = headerRow.insertCell();
-                nameHeader.innerHTML = "<strong>Select Provider:</strong>";
+                nameHeader.innerHTML = "Select Provider:";
+                nameHeader.classList.add("nameHeader");
                 const priceHeader = headerRow.insertCell();
                 priceHeader.innerHTML = "";
                 
@@ -347,14 +365,50 @@
                 spinner.style.display = "none";
             }
 
-            function displayErrorMessage(message) {
-                const errorMessageElement = document.getElementById("errorMessage");
-                errorMessageElement.textContent = message;
-            }
+            function displayMessageWithBcrikko(message) {
+                const generateButton = document.getElementById("generateButton");
+                
+                // Check if an error message container already exists and remove it
+                const existingContainer = document.querySelector(".bcrikko-message-container");
+                if (existingContainer) {
+                    existingContainer.remove();
+                }
 
-            function clearErrorMessage() {
-                const errorMessageElement = document.getElementById("errorMessage");
-                errorMessageElement.textContent = "";
+                // Create the message list container
+                const messageList = document.createElement("section");
+                messageList.className = "message-list bcrikko-message-container"; // added bcrikko-message-container class for easy identification
+                messageList.style.marginTop = "20px"; // added margin to the top
+
+                // Create the message section container
+                const messageSection = document.createElement("section");
+                messageSection.className = "message -left";
+
+                // Create the balloon container
+                const balloonContainer = document.createElement("div");
+                balloonContainer.className = "nes-balloon from-left";
+
+                // Create the inner paragraph for the message
+                const balloonText = document.createElement("p");
+                balloonText.textContent = message;
+
+                // Append the paragraph to the balloon container
+                balloonContainer.appendChild(balloonText);
+
+                // Create the nes-bcrikko character
+                const bcrikkoCharacter = document.createElement("i");
+                bcrikkoCharacter.className = "nes-bcrikko";
+                bcrikkoCharacter.style.display = "block"; // Make the character block-level to appear below the balloon
+                bcrikkoCharacter.style.marginTop = "10px"; // Add some margin to the top for spacing
+
+                // Append the balloon and character to the message section
+                messageSection.appendChild(balloonContainer);
+                messageSection.appendChild(bcrikkoCharacter);
+
+                // Append the message section to the message list
+                messageList.appendChild(messageSection);
+
+                // Insert the message list after the generateButton
+                generateButton.insertAdjacentElement('afterend', messageList);
             }
 
             //window.addEventListener("scroll", loadMoreDomains);

@@ -54,7 +54,6 @@ selectedExtensions = []
 
 @app.route("/generate_domains_without_extensions", methods=["POST"])
 def generate_domains_without_extensions_route():
-    print("generate_domains_without_extensions_route")
     data = request.get_json()
     description = data["description"]
     generated_domains = data["generatedDomains"]
@@ -75,15 +74,12 @@ def index():
 
 @app.route("/check_availability", methods=["GET"])
 def check_availability():
-    # print("check availibility")
     domain_name = request.args.get("domain")
 
     if has_dns(domain_name):
-        print("has dns")
         return jsonify({"available": False})
 
     try:
-        print("does not have dns")
         w = whois.whois(domain_name)
         if w.status is None:
             return jsonify({"available": True})
@@ -170,7 +166,10 @@ def has_dns(domain_name):
 
 
 def main():
-    app.run(host="0.0.0.0", port=80, debug=True)
+    if os.environ.get('FLASK_LOCAL'):
+        app.run(host="0.0.0.0", port=8080, debug=True)
+    else:
+        app.run(host="0.0.0.0", port=80, debug=False)
 
 
 if __name__ == "__main__":

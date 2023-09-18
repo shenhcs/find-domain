@@ -27,7 +27,6 @@ BAD_DESCRIPTION = "Bad description"
 
 
 def proc_txt(text):
-    # print(text)
     if BAD_DESCRIPTION in text:
         raise ValueError(BAD_DESCRIPTION)
 
@@ -36,6 +35,8 @@ def proc_txt(text):
     # only alphanumeric or hyphen
     dnlist = [domain for domain in dnlist if re.match(
         r"^[a-zA-Z0-9-]+$", domain)]
+    # capitalize the first letter and keep the rest as it is
+    dnlist = [domain[0].upper() + domain[1:] for domain in dnlist]
     return dnlist
 
 
@@ -46,7 +47,8 @@ def get_inference(description, num_domains=40):
     sys_prompt_content = f"You are David Ogilvy of domain name generation.\
     You will be provided with a text with description of a business idea, activity delimited by triple backticks.\
     If the text contains a description, generate a list of {num_domains} creative, catchy and fun domain names.\
-    Provide them in mix of upper and lowercase.\
+    If a domain name consists of multiple words, the first letter of each word shoud be uppercase.\
+    Do your best to create domain names in the language of description.\
     Provide them in comma separated values without domain extension.\
     If the text does not contain a description, simply write \"{BAD_DESCRIPTION}\"\
     "
@@ -74,7 +76,6 @@ def get_inference(description, num_domains=40):
 
 
 def generate_domains_without_extension(description, num_domains=30, max_retry=3):
-    # print("generate_domains_without_extension")
     num_good_domains = 10
     # Clean up the description
     description = re.sub(r"[^a-zA-Z0-9\s-]", "", description)
@@ -83,8 +84,6 @@ def generate_domains_without_extension(description, num_domains=30, max_retry=3)
     domains = []
     while retry_count < max_retry:
         generated_domains = get_inference(description, num_domains)
-        # print(f'Generated domains: {generated_domains}')
-
         if len(generated_domains) == 0:
             print("No domains generated.")
             break
