@@ -171,6 +171,15 @@
                     const domainsWithoutExtensions = data.domains;
                     console.log("domainsWithoutExtensions",domainsWithoutExtensions)
 
+                    //remove duplicates from new domains
+                    for (const domain of domainsWithoutExtensions) {
+                        //if domain is already in generatedDomainsWithoutExtensions, remove it from domainsWithoutExtensions
+                        if (generatedDomainsWithoutExtensions.has(domain)) {
+                            domainsWithoutExtensions.splice(domainsWithoutExtensions.indexOf(domain), 1);
+                        }
+                    }
+
+
                     // Add generated domains without extensions to the set
                     domainsWithoutExtensions.forEach(domain => generatedDomainsWithoutExtensions.add(domain));
 
